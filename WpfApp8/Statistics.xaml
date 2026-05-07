@@ -1,0 +1,122 @@
+﻿<UserControl x:Class="PCClubAdmin.Views.StatisticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Margin="20">
+        <!-- Заголовок экрана -->
+        <TextBlock Text="Статистика клуба" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+        <!-- Панель фильтров -->
+        <GroupBox Header="Фильтры статистики" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Период:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox Width="150" Height="25"
+                              ItemsSource="{Binding Periods}"
+                              SelectedItem="{Binding SelectedPeriod}"/>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Компьютер:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox Width="150" Height="25"
+                              ItemsSource="{Binding Computers}"
+                              SelectedItem="{Binding SelectedComputer}"/>
+                </StackPanel>
+
+                <Button Content="Применить фильтры" Command="{Binding ApplyFiltersCommand}"
+                       Width="120" Height="30" Margin="10,0,0,0"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Основные показатели -->
+        <Grid Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Общий доход -->
+            <Border Grid.Column="0" Background="#2E75B6" CornerRadius="5" Padding="15" Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock Text="Общий доход" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding TotalRevenue}" FontSize="18"
+                       FontWeight="Bold" Foreground="White" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Количество сессий -->
+            <Border Grid.Column="1" Background="#5B9BD5" CornerRadius="5" Padding="15" Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock Text="Количество сессий" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding SessionCount}" FontSize="18"
+                       FontWeight="Bold" Foreground="White" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Средняя продолжительность -->
+            <Border Grid.Column="2" Background="#FFC000" CornerRadius="5" Padding="15" Margin="0,0,10,0">
+                <StackPanel>
+                    <TextBlock Text="Средняя продолжительность" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding AverageDuration}" FontSize="18"
+                       FontWeight="Bold" Foreground="White" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Загруженность -->
+            <Border Grid.Column="3" Background="#70AD47" CornerRadius="5" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Загруженность" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding OccupancyRate}" FontSize="18"
+                       FontWeight="Bold" Foreground="White" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Графики и диаграммы -->
+        <TabControl Margin="0,0,0,20">
+            <!-- График доходов -->
+            <TabItem Header="Доходы по дням">
+                <Border Background="White" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+                    <TextBlock Text="График доходов по дням (заглушка)" FontSize="16"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </TabItem>
+
+            <!-- Распределение по компьютерам -->
+            <TabItem Header="Распределение по компьютерам">
+                <Border Background="White" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+                    <TextBlock Text="Диаграмма распределения сессий по компьютерам (заглушка)"
+                       FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </TabItem>
+
+            <!-- Популярные тарифы -->
+            <TabItem Header="Популярные тарифы">
+                <Border Background="White" Padding="15" BorderBrush="#DDD" BorderThickness="1">
+                    <TextBlock Text="График популярных тарифов (заглушка)" FontSize="16"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <!-- Детализация по сессиям -->
+        <GroupBox Header="Последние сессии" Margin="0,0,0,20">
+            <DataGrid AutoGenerateColumns="False" Height="200" CanUserAddRows="False" ItemsSource="{Binding RecentSessions}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                    <DataGridTextColumn Header="Клиент" Binding="{Binding ClientName}" Width="120"/>
+                    <DataGridTextColumn Header="Компьютер" Binding="{Binding ComputerName}" Width="80"/>
+                    <DataGridTextColumn Header="Начало" Binding="{Binding StartTime, StringFormat=dd.MM.yyyy HH:mm}" Width="100"/>
+                    <DataGridTextColumn Header="Окончание" Binding="{Binding EndTime, StringFormat=dd.MM.yyyy HH:mm}" Width="100"/>
+                    <DataGridTextColumn Header="Продолжительность" Binding="{Binding CalculatedDuration}" Width="90"/>
+                    <DataGridTextColumn Header="Стоимость" Binding="{Binding TotalCost, StringFormat={}{0:C}}" Width="80"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- Кнопка обновления -->
+        <Button Content="Обновить статистику" Command="{Binding RefreshStatisticsCommand}"
+               Width="150" Height="35" HorizontalAlignment="Right"/>
+    </StackPanel>
+</UserControl>
