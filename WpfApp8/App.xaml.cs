@@ -1,5 +1,4 @@
 using System.Windows;
-using PCClubAdmin.Services;
 
 namespace PCClubAdmin
 {
@@ -7,8 +6,6 @@ namespace PCClubAdmin
     {
         protected override void OnStartup(StartupEventArgs e)
         {
-            DatabaseInitializer.Initialize();
-            DemoDataSeeder.SeedIfNeeded();
             base.OnStartup(e);
         }
     }
