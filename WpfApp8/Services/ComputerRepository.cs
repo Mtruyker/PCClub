@@ -21,14 +21,12 @@ namespace PCClubAdmin.Services
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                var computer = new Computer
+                computers.Add(new Computer
                 {
                     Id = reader.GetInt32(0),
                     Name = reader.GetString(1),
                     IsOccupied = reader.GetBoolean(2)
-                };
-                computer.UpdateStatus();
-                computers.Add(computer);
+                });
             }
 
             return computers;

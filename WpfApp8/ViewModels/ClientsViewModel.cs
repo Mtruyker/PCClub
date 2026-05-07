@@ -3,7 +3,6 @@ using PCClubAdmin.Models;
 using PCClubAdmin.Services;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Input;
 
 namespace PCClubAdmin.ViewModels
@@ -11,6 +10,7 @@ namespace PCClubAdmin.ViewModels
     public class ClientsViewModel : ObservableObject
     {
         private readonly ClientRepository _repository;
+        private readonly IDialogService _dialogService;
         private bool _isAddDialogVisible;
         private string _clientName;
         private string _clientPhone;
@@ -18,9 +18,10 @@ namespace PCClubAdmin.ViewModels
         private string _clientBalance;
         private int? _editingClientId;
 
-        public ClientsViewModel()
+        public ClientsViewModel(IDialogService dialogService = null)
         {
             _repository = new ClientRepository();
+            _dialogService = dialogService ?? new MessageBoxDialogService();
             Clients = new ObservableCollection<Client>();
 
             ShowAddDialogCommand = new RelayCommand(ShowAddDialog);
@@ -31,7 +32,6 @@ namespace PCClubAdmin.ViewModels
             DeleteClientCommand = new RelayCommand<Client>(DeleteClient);
 
             ResetForm();
-            SeedIfEmpty();
             LoadClients();
         }
 
@@ -77,18 +77,6 @@ namespace PCClubAdmin.ViewModels
         public string DialogTitle => IsEditing ? "Редактирование клиента" : "Добавление нового клиента";
         public string SaveButtonText => IsEditing ? "Обновить" : "Сохранить";
 
-        private void SeedIfEmpty()
-        {
-            if (_repository.GetAll().Count > 0)
-            {
-                return;
-            }
-
-            _repository.Add(new Client { Name = "Иванов Иван", Phone = "+7 (999) 123-45-67", Email = "ivan@mail.ru", Balance = 1500m });
-            _repository.Add(new Client { Name = "Петров Пётр", Phone = "+7 (999) 234-56-78", Email = "petrov@gmail.com", Balance = 2300m });
-            _repository.Add(new Client { Name = "Сидорова Анна", Phone = "+7 (999) 345-67-89", Email = "anna@yandex.ru", Balance = 850m });
-        }
-
         private void LoadClients()
         {
             Clients.Clear();
@@ -117,13 +105,13 @@ namespace PCClubAdmin.ViewModels
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                MessageBox.Show("Введите имя клиента.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning("Введите имя клиента.", "Ошибка");
                 return;
             }
 
             if (!decimal.TryParse(balanceRaw, NumberStyles.Number, CultureInfo.CurrentCulture, out var balance) || balance < 0)
             {
-                MessageBox.Show("Введите корректный баланс (неотрицательное число).", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning("Введите корректный баланс (неотрицательное число).", "Ошибка");
                 return;
             }
 
@@ -197,13 +185,11 @@ namespace PCClubAdmin.ViewModels
                 return;
             }
 
-            var result = MessageBox.Show(
+            var confirmed = _dialogService.Confirm(
                 $"Удалить клиента '{client.Name}'?",
-                "Подтверждение удаления",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                "Подтверждение удаления");
 
-            if (result != MessageBoxResult.Yes)
+            if (!confirmed)
             {
                 return;
             }

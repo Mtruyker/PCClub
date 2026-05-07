@@ -2,7 +2,6 @@ using PCClubAdmin.Infrastructure;
 using PCClubAdmin.Models;
 using PCClubAdmin.Services;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Input;
 
 namespace PCClubAdmin.ViewModels
@@ -10,14 +9,16 @@ namespace PCClubAdmin.ViewModels
     public class ComputersViewModel : ObservableObject
     {
         private readonly ComputerRepository _repository;
+        private readonly IDialogService _dialogService;
         private bool _isAddDialogVisible;
         private string _computerName;
         private string _selectedStatus;
         private int? _editingComputerId;
 
-        public ComputersViewModel()
+        public ComputersViewModel(IDialogService dialogService = null)
         {
             _repository = new ComputerRepository();
+            _dialogService = dialogService ?? new MessageBoxDialogService();
             Computers = new ObservableCollection<Computer>();
             Statuses = new ObservableCollection<string> { "Свободен", "Занят" };
 
@@ -28,7 +29,6 @@ namespace PCClubAdmin.ViewModels
             DeleteComputerCommand = new RelayCommand<Computer>(DeleteComputer);
 
             ResetForm();
-            SeedIfEmpty();
             LoadComputers();
         }
 
@@ -62,18 +62,6 @@ namespace PCClubAdmin.ViewModels
         public string DialogTitle => IsEditing ? "Редактирование компьютера" : "Добавление нового компьютера";
         public string SaveButtonText => IsEditing ? "Обновить" : "Сохранить";
 
-        private void SeedIfEmpty()
-        {
-            if (_repository.GetAll().Count > 0)
-            {
-                return;
-            }
-
-            _repository.Add(new Computer { Name = "ПК-01", IsOccupied = false });
-            _repository.Add(new Computer { Name = "ПК-02", IsOccupied = true });
-            _repository.Add(new Computer { Name = "ПК-03", IsOccupied = false });
-        }
-
         private void LoadComputers()
         {
             Computers.Clear();
@@ -98,7 +86,7 @@ namespace PCClubAdmin.ViewModels
             var name = (ComputerName ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(name))
             {
-                MessageBox.Show("Введите название компьютера.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning("Введите название компьютера.", "Ошибка");
                 return;
             }
 
@@ -110,7 +98,6 @@ namespace PCClubAdmin.ViewModels
                     Name = name,
                     IsOccupied = SelectedStatus == "Занят"
                 };
-                existing.UpdateStatus();
                 _repository.Update(existing);
                 LoadComputers();
             }
@@ -121,7 +108,6 @@ namespace PCClubAdmin.ViewModels
                     Name = name,
                     IsOccupied = SelectedStatus == "Занят"
                 };
-                computer.UpdateStatus();
                 computer.Id = _repository.Add(computer);
                 Computers.Add(computer);
             }
@@ -167,13 +153,11 @@ namespace PCClubAdmin.ViewModels
                 return;
             }
 
-            var result = MessageBox.Show(
+            var confirmed = _dialogService.Confirm(
                 $"Удалить компьютер '{computer.Name}'?",
-                "Подтверждение удаления",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                "Подтверждение удаления");
 
-            if (result != MessageBoxResult.Yes)
+            if (!confirmed)
             {
                 return;
             }

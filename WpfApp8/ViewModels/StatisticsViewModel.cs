@@ -27,6 +27,9 @@ namespace PCClubAdmin.ViewModels
             Periods = new ObservableCollection<string> { "Сегодня", "Эта неделя", "Этот месяц" };
             Computers = new ObservableCollection<string> { "Все компьютеры" };
             RecentSessions = new ObservableCollection<Session>();
+            DailyRevenue = new ObservableCollection<StatisticItem>();
+            ComputerDistribution = new ObservableCollection<StatisticItem>();
+            PopularTariffs = new ObservableCollection<StatisticItem>();
 
             ApplyFiltersCommand = new RelayCommand(ApplyFilters);
             RefreshStatisticsCommand = new RelayCommand(ApplyFilters);
@@ -42,6 +45,9 @@ namespace PCClubAdmin.ViewModels
         public ObservableCollection<string> Periods { get; }
         public ObservableCollection<string> Computers { get; }
         public ObservableCollection<Session> RecentSessions { get; }
+        public ObservableCollection<StatisticItem> DailyRevenue { get; }
+        public ObservableCollection<StatisticItem> ComputerDistribution { get; }
+        public ObservableCollection<StatisticItem> PopularTariffs { get; }
 
         public string SelectedPeriod
         {
@@ -104,6 +110,51 @@ namespace PCClubAdmin.ViewModels
             foreach (var session in sessions.Take(20))
             {
                 RecentSessions.Add(session);
+            }
+
+            UpdateBreakdowns(sessions);
+        }
+
+        private void UpdateBreakdowns(System.Collections.Generic.List<Session> sessions)
+        {
+            DailyRevenue.Clear();
+            foreach (var item in sessions
+                         .GroupBy(s => s.StartTime.Date)
+                         .OrderByDescending(g => g.Key)
+                         .Select(g => new StatisticItem
+                         {
+                             Name = g.Key.ToString("dd.MM.yyyy"),
+                             Value = g.Sum(s => s.TotalCost ?? 0m).ToString("C")
+                         }))
+            {
+                DailyRevenue.Add(item);
+            }
+
+            ComputerDistribution.Clear();
+            foreach (var item in sessions
+                         .GroupBy(s => s.ComputerName)
+                         .OrderByDescending(g => g.Count())
+                         .Select(g => new StatisticItem
+                         {
+                             Name = g.Key,
+                             Value = $"{g.Count()} сесс."
+                         }))
+            {
+                ComputerDistribution.Add(item);
+            }
+
+            PopularTariffs.Clear();
+            foreach (var item in sessions
+                         .Where(s => !string.IsNullOrWhiteSpace(s.TariffName))
+                         .GroupBy(s => s.TariffName)
+                         .OrderByDescending(g => g.Count())
+                         .Select(g => new StatisticItem
+                         {
+                             Name = g.Key,
+                             Value = $"{g.Count()} сесс."
+                         }))
+            {
+                PopularTariffs.Add(item);
             }
         }
 

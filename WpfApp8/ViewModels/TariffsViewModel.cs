@@ -3,7 +3,6 @@ using PCClubAdmin.Models;
 using PCClubAdmin.Services;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Input;
 
 namespace PCClubAdmin.ViewModels
@@ -11,15 +10,17 @@ namespace PCClubAdmin.ViewModels
     public class TariffsViewModel : ObservableObject
     {
         private readonly TariffRepository _repository;
+        private readonly IDialogService _dialogService;
         private bool _isAddDialogVisible;
         private string _tariffName;
         private string _tariffCost;
         private string _tariffDescription;
         private int? _editingTariffId;
 
-        public TariffsViewModel()
+        public TariffsViewModel(IDialogService dialogService = null)
         {
             _repository = new TariffRepository();
+            _dialogService = dialogService ?? new MessageBoxDialogService();
             Tariffs = new ObservableCollection<Tariff>();
 
             ShowAddDialogCommand = new RelayCommand(ShowAddDialog);
@@ -30,7 +31,6 @@ namespace PCClubAdmin.ViewModels
             DeleteTariffCommand = new RelayCommand<Tariff>(DeleteTariff);
 
             ResetForm();
-            SeedIfEmpty();
             LoadTariffs();
         }
 
@@ -70,18 +70,6 @@ namespace PCClubAdmin.ViewModels
         public string DialogTitle => IsEditing ? "Редактирование тарифа" : "Добавление нового тарифа";
         public string SaveButtonText => IsEditing ? "Обновить" : "Сохранить";
 
-        private void SeedIfEmpty()
-        {
-            if (_repository.GetAll().Count > 0)
-            {
-                return;
-            }
-
-            _repository.Add(new Tariff { Name = "Базовый", CostPerHour = 300m, Description = "Стандартный тариф для обычных пользователей" });
-            _repository.Add(new Tariff { Name = "Премиум", CostPerHour = 450m, Description = "Повышенная скорость и приоритет в очереди" });
-            _repository.Add(new Tariff { Name = "Ночной", CostPerHour = 150m, Description = "Скидка на использование в ночное время (22:00–08:00)" });
-        }
-
         private void LoadTariffs()
         {
             Tariffs.Clear();
@@ -109,13 +97,13 @@ namespace PCClubAdmin.ViewModels
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                MessageBox.Show("Введите название тарифа.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning("Введите название тарифа.", "Ошибка");
                 return;
             }
 
             if (!decimal.TryParse(costRaw, NumberStyles.Number, CultureInfo.CurrentCulture, out var cost) || cost <= 0)
             {
-                MessageBox.Show("Введите корректную стоимость за час (положительное число).", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowWarning("Введите корректную стоимость за час (положительное число).", "Ошибка");
                 return;
             }
 
@@ -185,13 +173,11 @@ namespace PCClubAdmin.ViewModels
                 return;
             }
 
-            var result = MessageBox.Show(
+            var confirmed = _dialogService.Confirm(
                 $"Удалить тариф '{tariff.Name}'?",
-                "Подтверждение удаления",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                "Подтверждение удаления");
 
-            if (result != MessageBoxResult.Yes)
+            if (!confirmed)
             {
                 return;
             }
